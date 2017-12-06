@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Map :)</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- maybe add a favivivivicon :) -->
+	<!-- <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" /> -->
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js" integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log==" crossorigin=""></script>
+
+    <!-- for eating csv and regurgitating into geojson -->
+    <script src='http://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+
+
+
+<link href="https://fonts.googleapis.com/css?family=Spectral+SC:400,600" rel="stylesheet">
+
+
+
+</head>
+<body>
+
+  <style>
+
+  * {
+    margin:0;
+    padding:0;
+    text-align: center;
+    vertical-align: middle;
+    font-family: sans-serif;
+}
+
+body {
+  background-image: url('back.png');
+}
+
+  #main {
+    width: 1102px;
+    heigh: 800px;
+    margin: 0 auto;
+  }
+
+  #title {
+    padding-top: 30px;
+    padding-bottom: 30px;
+    font-size: 14px;
+		width: 666px;
+		margin: 0 auto;
+
+  }
+
+  #title h1 {
+      font-family: 'Spectral SC', serif;
+  }
+
+	#title p {
+	}
+
+  #mapid {
+    width: 1100px;
+    height: 600px;
+    padding: 0px;
+    margin: 0px;
+    border: 1px solid;
+    border-color: grey;
+    box-shadow: 0px 0px 2px 2px rgba(50, 50, 50, 0.3);
+  }
+
+	#plotyear {
+		width: 800px;
+    height: 400px;
+		border: 0px solid;
+		border-color: white;
+		box-shadow: 0px 0px 2px 2px rgba(50, 50, 50, 0.1);
+		margin: 0 auto;
+	}
+
+  </style>
+
+  <div id="main">
+
+    <div id="title">
+      <h1>UNESCO World Heritage Sites</h1>
+    </div>
+
+    <div id="mapid"></div>
+
+    <p><br></p>
+    <p>       <svg width="10" height="10">
+        <circle cx="5" cy="5" r="5" stroke="white" stroke-width="2" fill="#ff1818"/>
+			</svg> Natural Site&nbsp;
+				<svg width="10" height="10">
+		        <circle cx="5" cy="5" r="5" stroke="white" stroke-width="2" fill="#4250f4"/>
+					</svg> Cultural Site&nbsp;
+						<svg width="10" height="10">
+				        <circle cx="5" cy="5" r="5" stroke="white" stroke-width="2" fill="#c118ff"/>
+				        </svg> Both</p>
+
+				<p><br></p>
+
+    <!-- <div id="plotyear">
+			<IMG SRC="year.png" ALT="some text" WIDTH=800 HEIGHT=400>
+		</div> -->
+
+  </div>
+
+
+  <script>
+
+  var southWest = L.latLng(-80, -200),
+  northEast = L.latLng(84, 200),
+  bounds = L.latLngBounds(southWest, northEast);
+
+  	var map = L.map('mapid',{maxBounds: bounds}).setView([14, -4.2], 2);
+
+  	L.tileLayer('https://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}', {
+  		maxZoom: 11,
+      minZoom: 2,
+  		attribution: 'Point data from <a href="http://whc.unesco.org/en/syndication">UNESCO</a> (2017) | Basemap from <a href="http://giscience.uni-hd.de/">GIScience Research Group @ University of Heidelberg</a> | Basemap data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> | Map built by <a href="http://jamaps.github.io">Jeff Allen</a> as a test for Q4.2H8',
+  		id: 'mapbox.streets'
+  	}).addTo(map);
+
+
+var nat = {
+    radius: 5,
+    fillColor: "#ff1818",
+    color: "#ffffff",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.9
+};
+
+var cul = {
+    radius: 5,
+    fillColor: "#4250f4",
+    color: "#ffffff",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.9
+};
+
+var culnat = {
+    radius: 5,
+    fillColor: "#c118ff",
+    color: "#ffffff",
+    weight: 1,
+    opacity: 1,
+    fillOpacity: 0.9
+};
+
+
+var polygon = L.polygon([
+    [90, -180],
+    [90, 180],
+    [-90, 180],
+    [-90, -180]
+    ],{color: 'white',fillOpacity: 0.33}).addTo(map);
+
+
+  // // this works
+    var customLayer = L.geoJson(null, {
+    onEachFeature: function(feature, layer) {
+      layer.bindPopup("<b>Name: </b>" + feature.properties.name_en + "<br><b>Date Inscribed: </b>" + feature.properties.date_inscribed);
+    },
+
+    filter: function(feature, layer) {
+        // if (feature.properties.date_inscribed > 2000)
+        return true; },
+
+    pointToLayer: function (feature, latlng) {
+            if (feature.properties.category_short === 'N') {
+              return L.circleMarker(latlng, nat)
+            } else if (feature.properties.category_short === 'C') {
+              return L.circleMarker(latlng, cul)
+            } else {
+              return L.circleMarker(latlng, culnat)
+            };
+        }
+    });
+
+
+    var runLayer = omnivore.csv('sites2017.csv', null, customLayer)
+        .on('ready', function() {
+            // http://leafletjs.com/reference.html#map-fitbounds
+            // map.fitBounds(runLayer.getBounds());
+        })
+        .addTo(map);
+
+
+  </script>
+
+  </body>
+  </html>
